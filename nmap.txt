@@ -1,0 +1,66 @@
+
+import nmap
+
+# Create Nmap scanner
+scanner = nmap.PortScanner()
+
+# Get target IP or hostname
+target = input("Enter target IP address: ")
+
+try:
+    # Perform network scan
+    print("\nScanning target:", target)
+    scanner.scan(
+        hosts=target,
+        arguments="-A"
+    )
+
+    # Display scan results
+    for host in scanner.all_hosts():
+        print("\nTarget:", host)
+        print("Hostname:", scanner[host].hostname())
+        print("Host Status:", scanner[host].state())
+
+        # Display open ports and services
+        print("\nOpen Ports and Services:")
+        for protocol in scanner[host].all_protocols():
+            ports = scanner[host][protocol].keys()
+
+            for port in sorted(ports):
+                details = scanner[host][protocol][port]
+
+                if details["state"] == "open":
+                    print("Port:", port)
+                    print("Protocol:", protocol)
+                    print("Service:", details["name"])
+                    print("Product:", details.get("product", "Unknown"))
+                    print("Version:", details.get("version", "Unknown"))
+                    print("-" * 30)
+
+        # Display OS information
+        print("\nOperating System:")
+        os_matches = scanner[host].get("osmatch", [])
+
+        if os_matches:
+            for os in os_matches:
+                print("OS:", os["name"])
+                print("Accuracy:", os["accuracy"] + "%")
+        else:
+            print("OS detection unavailable")
+
+        # Display traceroute
+        print("\nTraceroute Information:")
+        trace = scanner[host].get("trace", {})
+
+        if trace and trace.get("hops"):
+            for hop in trace["hops"]:
+                print(
+                    "TTL:", hop.get("ttl"),
+                    "IP:", hop.get("ipaddr", "Unknown"),
+                    "Host:", hop.get("host", "Unknown")
+                )
+        else:
+            print("Traceroute information unavailable")
+
+except Exception as error:
+    print("Error:", error)
